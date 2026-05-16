@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamVault | Secure Access</title>
+    <style>
+        :root {
+            --bg-dark: #07070a;
+            --brand-red: #E50914;
+            --brand-red-tint: rgba(229, 9, 20, 0.15);
+            --text-main: #f5f5f5;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; 
+            perspective: 1200px;
+        }
+
+        /* --- INTERACTIVE CONSTELLATION MESH --- */
+        #networkCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: radial-gradient(circle at center, #140d10 0%, var(--bg-dark) 100%);
+        }
+
+        /* --- 3D INTERACTIVE LOGIN VAULT --- */
+        .login-box {
+            background: rgba(12, 12, 15, 0.6); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 50px 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+            border: 1px solid rgba(229, 9, 20, 0.2); 
+            
+            animation: slideUpFade 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            opacity: 0;
+            transform: translateY(40px);
+            
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.5s ease, border 0.5s ease;
+        }
+
+        @keyframes slideUpFade {
+            to { opacity: 1; transform: translateY(0) translateZ(0); }
+        }
+
+        .login-box:hover {
+            transform: translateY(-5px) rotateX(4deg) rotateY(-4deg) translateZ(30px);
+            box-shadow: -15px 25px 50px rgba(0,0,0,0.9), 0 0 50px rgba(229, 9, 20, 0.15);
+            border: 1px solid rgba(229, 9, 20, 0.4);
+        }
+
+        /* --- 3D LOGO --- */
+        h1 { 
+            margin: 0 0 10px 0; 
+            color: var(--brand-red); 
+            text-align: center; 
+            font-size: 2.8rem; 
+            letter-spacing: 3px; 
+            text-transform: uppercase; 
+            text-shadow: 
+                1px 1px 0px #a30000,
+                2px 2px 0px #8a0000,
+                3px 3px 0px #700000,
+                4px 4px 0px #570000,
+                5px 5px 0px #3d0000,
+                6px 6px 15px rgba(0,0,0, 0.8),
+                0px 10px 20px rgba(229, 9, 20, 0.5);
+            transform: rotateX(10deg) rotateY(-5deg); 
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        h1:hover {
+            transform: rotateX(0deg) rotateY(0deg) translateZ(30px) scale(1.05);
+        }
+
+        p.subtitle { 
+            text-align: center; 
+            color: #888; 
+            margin-bottom: 35px; 
+            font-size: 0.85rem; 
+            letter-spacing: 2px; 
+            text-transform: uppercase;
+            transform: translateZ(20px); 
+        }
+
+        .form-content {
+            transform-style: preserve-3d;
+            transform: translateZ(25px);
+        }
+
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px;} 
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #330a0a; 
+            border-radius: 6px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.3s ease; 
+        }
+        .input-group input:focus { border-color: var(--brand-red); box-shadow: 0 0 15px rgba(229, 9, 20, 0.2); transform: translateY(-2px); }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #E50914 0%, #8b0000 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            box-shadow: 0 5px 15px rgba(229, 9, 20, 0.2); 
+        }
+        .auth-btn:hover { background: linear-gradient(135deg, #ff0f1a 0%, #b30000 100%); transform: translateY(-2px) scale(1.02); box-shadow: 0 10px 25px rgba(229, 9, 20, 0.4); } 
+        .auth-btn:active { transform: translateY(1px); box-shadow: 0 5px 10px rgba(229, 9, 20, 0.2); }
+
+        .error-msg { color: #ff6666; font-size: 0.85rem; text-align: center; margin-top: 15px; display: none; background: rgba(255, 102, 102, 0.1); padding: 10px; border-radius: 6px; border: 1px solid rgba(255, 102, 102, 0.2); animation: shake 0.4s ease-in-out; } 
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="networkCanvas"></canvas>
+
+    <div class="login-box">
+        <h1>STREAMVAULT</h1>
+        <p class="subtitle">Secure Gateway Access</p>
+
+        <div class="form-content">
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Admin ID</label>
+                    <input type="text" id="username" required autocomplete="off" placeholder="Enter Identity">
+                </div>
+                
+                <div class="input-group">
+                    <label>Security Key</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+
+                <button type="submit" class="auth-btn">AUTHORIZE</button>
+                <div class="error-msg" id="errorMsg">Authentication Failed. Access Denied.</div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. AUTHENTICATION LOGIC ---
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            fetch('http://localhost:8080/api/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, password: pass })
+            })
+            .then(response => {
+                if (response.ok) {
+                    sessionStorage.setItem('StreamVault_Auth', 'SecureToken_Active');
+                    window.location.replace('index.html');
+                } else {
+                    document.getElementById('errorMsg').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error("Connection Error:", error);
+                document.getElementById('errorMsg').innerText = "Server connection failed.";
+                document.getElementById('errorMsg').style.display = 'block';
+            });
+        });
+
+        // --- 2. NEW CANVAS CONSTELLATION MESH ---
+        const canvas = document.getElementById('networkCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let particlesArray = [];
+        // Adjust these to change the density and look
+        const numberOfParticles = 120;
+        const connectDistance = 150;
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let mouse = {
+            x: null,
+            y: null,
+            // Makes the mouse a gravity well that pulls nodes in
+            radius: 200 
+        }
+
+        window.addEventListener('mousemove', function(event) {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+
+        window.addEventListener('mouseout', function() {
+            mouse.x = undefined;
+            mouse.y = undefined;
+        });
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                // Base position for gravity effect return
+                this.baseX = this.x;
+                this.baseY = this.y;
+                // Density affects how strongly they react to the mouse
+                this.density = (Math.random() * 30) + 1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                // Stars glow slightly
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#E50914';
+                ctx.fillStyle = '#E50914';
+                ctx.fill();
+            }
+
+            update() {
+                // Bounce off edges
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+
+                // Interaction: Mouse pulls particles IN and scatters them slightly
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                
+                let forceDirectionX = dx / distance;
+                let forceDirectionY = dy / distance;
+                
+                // Max distance, past that the force is 0
+                let force = (mouse.radius - distance) / mouse.radius;
+                
+                // If we went below zero, set it to zero.
+                if (force < 0) force = 0;
+                
+                let directionX = (forceDirectionX * force * this.density) * 0.6;
+                let directionY = (forceDirectionY * force * this.density) * 0.6;
+
+                if (distance < mouse.radius + this.size) {
+                    // PULL IN
+                    this.x += directionX;
+                    this.y += directionY;
+                } else {
+                    // Return slowly to normal drift path if far away from mouse
+                    if (this.x !== this.baseX) {
+                        let dx = this.x - this.baseX;
+                        this.x -= dx/20;
+                    }
+                    if (this.y !== this.baseY) {
+                        let dy = this.y - this.baseY;
+                        this.y -= dy/20;
+                    }
+                }
+
+                // Natural slow drift
+                this.x += this.directionX * 0.5;
+                this.y += this.directionY * 0.5;
+
+                // Update base position so they slowly migrate
+                this.baseX += this.directionX * 0.5;
+                this.baseY += this.directionY * 0.5;
+
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1; // Smaller, sharper stars
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 2) - 1; // Slightly faster base drift
+                let directionY = (Math.random() * 2) - 1;
+                particlesArray.push(new Particle(x, y, directionX, directionY, size));
+            }
+        }
+
+        function connect() {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let dx = particlesArray[a].x - particlesArray[b].x;
+                    let dy = particlesArray[a].y - particlesArray[b].y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < connectDistance) {
+                        opacityValue = 1 - (distance / connectDistance);
+                        ctx.strokeStyle = `rgba(229, 9, 20, ${opacityValue})`;
+                        ctx.lineWidth = 1; // Thin laser lines
+                        // Remove shadow for sharp lines
+                        ctx.shadowBlur = 0;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            // Clear screen fully to prevent trails, leaving sharp nodes
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        window.addEventListener('resize', function() {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            init();
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
